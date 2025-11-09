@@ -1,0 +1,50 @@
+name: Matrix Build with Artifact Management
+
+# Trigger the workflow manually
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Configure the matrix strategy using Node.js versions
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+        # At least 3 successful matrix jobs will run (one for each version)
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # Required step identifier: matrix-8807d2d
+      - name: Run Build Logic (Identifier: matrix-8807d2d)
+        run: |
+          echo "Starting simulated build for Node.js version ${{ matrix.node-version }} on runner ${{ runner.name }}"
+          echo "matrix-8807d2d" # Required step identifier in output
+          echo "Build finished successfully."
+
+      - name: Generate Unique Artifact Content
+        id: generate
+        run: |
+          # Create a unique build artifact file
+          ARTIFACT_NAME="build-output-node-${{ matrix.node-version }}.txt"
+          echo "This is the build output for Node.js ${{ matrix.node-version }}." > $ARTIFACT_NAME
+          echo "The build was executed at $(date)." >> $ARTIFACT_NAME
+          echo "This file is non-empty and contains unique content." >> $ARTIFACT_NAME
+          echo "artifact_path=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Required naming convention: build-8807d2d-<variant>
+          name: build-8807d2d-node-${{ matrix.node-version }}
+          path: ${{ steps.generate.outputs.artifact_path }}
+          # Ensures successful uploads across multiple concurrent jobs
+          retention-days: 1
